@@ -1,0 +1,1 @@
+ffmpeg -re -f rawvideo -vcodec rawvideo -s 704x576 -pix_fmt yuv420p -i \\.\pipe\channel%1.yuv -vcodec libx264  -b:v 1000k -r 25 -deinterlace -f flv rtmp://127.0.0.1/live/channel%1

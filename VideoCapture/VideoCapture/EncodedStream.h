@@ -96,6 +96,9 @@ public:
 		}
 	}
 
+	int getChannelId(){
+		return m_channel_id;
+	}
 
 private:
 	HANDLE m_channel_handle;
