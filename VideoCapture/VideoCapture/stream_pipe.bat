@@ -1,0 +1,1 @@
+ffmpeg -re  -i \\.\pipe\channel3.264 -f flv rtmp://127.0.0.1/live/test

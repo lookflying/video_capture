@@ -42,7 +42,7 @@ EncodedStream::~EncodedStream(){
 	if (m_g_count == 0){
 		closeDSP();
 	}
-	
+
 }
 
 void EncodedStream::openDSP(){
@@ -71,7 +71,8 @@ void EncodedStream::start(){
 			SetupBitrateControl(m_channel_handle, 2000000);//unit:bps
 			SetBitrateControlMode(m_channel_handle, brCBR);//use cbr, or brVBR
 			StartVideoCapture(m_channel_handle);
-		}else if (m_g_real_ori_handler != NULL){
+		}
+		if (m_g_real_ori_handler != NULL){
 			m_yuv_buf_size = WIDTH * HEIGHT * 3 / 2; 
 			m_yuv_buf = new unsigned char[m_yuv_buf_size];
 			SetImageStream(m_channel_handle, true, 25, WIDTH, HEIGHT, m_yuv_buf);
@@ -82,8 +83,12 @@ void EncodedStream::start(){
 
 void EncodedStream::stop(){
 	if (m_channel_id >= 0){
-		StopVideoCapture(m_channel_handle);
-		SetImageStream(m_channel_handle, false, 25, WIDTH, HEIGHT, NULL);
+		if (m_g_real_handler != NULL || m_g_real_handler_ext != NULL){
+			StopVideoCapture(m_channel_handle);
+		}
+		if (m_g_real_ori_handler != NULL){
+			SetImageStream(m_channel_handle, false, 25, WIDTH, HEIGHT, NULL);
+		}
 	}
 
 }

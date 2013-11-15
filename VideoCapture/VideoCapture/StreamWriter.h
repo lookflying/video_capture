@@ -99,7 +99,8 @@ public:
 		}
 		DWORD written;
 		if (!WriteFile(m_pipe_yuv, buf, len, &written , NULL)){
-			assert(0);
+			perror("pipe broken");
+			return;
 		}	
 
 	}
