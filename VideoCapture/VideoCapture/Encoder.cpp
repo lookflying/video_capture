@@ -32,7 +32,8 @@ Encoder::~Encoder(){
 void Encoder::encode(unsigned char *yuv_buf){
 	x264_picture_t pic_in, pic_out;
 	x264_picture_alloc(&pic_in,  X264_CSP_I420, m_width, m_height);
-	pic_in.img.plane[0] = yuv_buf;
+	memcpy(pic_in.img.plane[0], yuv_buf, m_width * m_height * 3 / 2);
+	//pic_in.img.plane[0] = yuv_buf;
 	pic_in.img.plane[1] = pic_in.img.plane[0] + m_width * m_height;
 	pic_in.img.plane[2] = pic_in.img.plane[1] + m_width * m_height / 4;
 	x264_encoder_encode(m_encoder, &m_nals, &m_nnal, &pic_in, &pic_out);
