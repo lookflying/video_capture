@@ -373,6 +373,72 @@ static inline int nal_start_pos(unsigned char * buf){
 		return 0;
 	}
 }
+void RtmpPublisher::sendMetaData(Encoder * encoder){
+	RTMPPacket *packet = new RTMPPacket;
+	RTMPPacket_Reset(packet);
+	RTMPPacket_Alloc(packet, BUF_SIZE);
+	char* amf_ptr;
+	unsigned int amf_len;
+	
+	packet->m_nChannel = 0x04;
+	packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+	packet->m_nTimeStamp = 0;
+	packet->m_nInfoField2 = m_rtmp->m_stream_id;
+	packet->m_hasAbsTimestamp = 0;
+	packet->m_packetType = RTMP_PACKET_TYPE_INFO;
+	amf_ptr = packet->m_body;
+
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string(amf_ptr, "@setDataFrame" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string(amf_ptr, "onMetaData" );
+	amf_ptr=put_byte(amf_ptr, AMF_OBJECT );
+	amf_ptr=put_amf_string( amf_ptr, "author" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "" );
+	amf_ptr=put_amf_string( amf_ptr, "copyright" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "" );
+	amf_ptr=put_amf_string( amf_ptr, "description" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "" );
+	amf_ptr=put_amf_string( amf_ptr, "keywords" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "" );
+	amf_ptr=put_amf_string( amf_ptr, "rating" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "" );
+	amf_ptr=put_amf_string( amf_ptr, "presetname" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "Custom" );
+	amf_ptr=put_amf_string( amf_ptr, "width" );
+	amf_ptr=put_amf_double( amf_ptr, (double)encoder->getWidth());
+	amf_ptr=put_amf_string( amf_ptr, "height" );
+	amf_ptr=put_amf_double( amf_ptr, (double)encoder->getHeight());
+	amf_ptr=put_amf_string( amf_ptr, "framerate" );
+	amf_ptr=put_amf_double( amf_ptr, (double)encoder->getFps());
+	amf_ptr=put_amf_string( amf_ptr, "videocodecid" );
+	amf_ptr=put_byte(amf_ptr, AMF_STRING );
+	amf_ptr=put_amf_string( amf_ptr, "avc1" );
+	amf_ptr=put_amf_string( amf_ptr, "videodatarate" );
+	amf_ptr=put_amf_double( amf_ptr, (double)encoder->getParam()->rc.i_bitrate ); 
+	amf_ptr=put_amf_string( amf_ptr, "avclevel" );
+	amf_ptr=put_amf_double( amf_ptr, (double)encoder->getParam()->i_level_idc ); 
+	amf_ptr=put_amf_string( amf_ptr, "avcprofile" );
+	amf_ptr=put_amf_double( amf_ptr, 0x42 ); 
+	amf_ptr=put_amf_string( amf_ptr, "videokeyframe_frequency" );
+	amf_ptr=put_amf_double( amf_ptr, 3 ); 
+	amf_ptr=put_amf_string( amf_ptr, "" );
+	amf_ptr=put_byte( amf_ptr, AMF_OBJECT_END );
+	amf_len = (unsigned int)(amf_ptr - packet->m_body);
+	packet->m_nBodySize = amf_len;
+	assert(RTMP_IsConnected(this->m_rtmp));
+	assert(RTMP_SendPacket(this->m_rtmp, packet, 0));
+
+
+	RTMPPacket_Free(packet);
+	delete packet;
+}
 
 void RtmpPublisher::sendHeader(Encoder * encoder){
 	RTMPPacket *packet = new RTMPPacket;

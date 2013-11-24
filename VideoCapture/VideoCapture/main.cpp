@@ -76,6 +76,7 @@ int main(int argc, char** argv){
 		char url[200];
 		sprintf(url, "rtmp://127.0.0.1/oflaDemo/test%d", *it);
 		publisher_map[*it] = new RtmpPublisher(url);
+		//publisher_map[*it]->sendMetaData(EncodedStream::getStream(*it)->getEncoder());
 		publisher_map[*it]->sendHeader(EncodedStream::getStream(*it)->getEncoder());
 		printf("open stream %d\n", *it);
 

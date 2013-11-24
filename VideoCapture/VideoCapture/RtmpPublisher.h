@@ -33,6 +33,7 @@ public:
 	~RtmpPublisher();
 	void send(const unsigned char* buf, unsigned int len, int type, unsigned int timestamp);
 	//void prepare(Encoder * encoder, x264_param_t * param);
+	void sendMetaData(Encoder * encoder);
 	void sendHeader(Encoder * encoder);
 	void sendFrame(Encoder * encoder);
 	unsigned int getTimestamp(){
