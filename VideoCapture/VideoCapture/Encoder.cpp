@@ -36,6 +36,7 @@ void Encoder::encode(unsigned char *yuv_buf){
 	pic_in.img.plane[1] = pic_in.img.plane[0] + m_width * m_height;
 	pic_in.img.plane[2] = pic_in.img.plane[1] + m_width * m_height / 4;
 	x264_encoder_encode(m_encoder, &m_nals, &m_nnal, &pic_in, &pic_out);
+	x264_picture_clean(&pic_in);
 }
 
 void Encoder::getHeaders(){
