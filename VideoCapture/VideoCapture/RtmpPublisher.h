@@ -30,6 +30,7 @@ class RtmpPublisher{
 public:
 	RtmpPublisher(RTMP * rtmp, const char* url);
 	RtmpPublisher(const char* url);
+	RtmpPublisher(const char* url, int p);
 	~RtmpPublisher();
 	void send(const unsigned char* buf, unsigned int len, int type, unsigned int timestamp);
 	//void prepare(Encoder * encoder, x264_param_t * param);
@@ -40,7 +41,7 @@ public:
 		unsigned long timestamp = m_last_timestamp;
 		m_last_tick = GetTickCount();
 		m_last_timestamp = timestamp + (m_last_tick - tick);
-		printf(" Timestamp:%08lu\n", m_last_timestamp);
+		//printf(" Timestamp:%08lu\n", m_last_timestamp);
 		return  (unsigned int)m_last_timestamp;
 	}
 	//unsigned char * getAmfBuf(){

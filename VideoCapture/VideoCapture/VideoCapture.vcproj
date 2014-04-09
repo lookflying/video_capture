@@ -186,6 +186,10 @@
 				RelativePath=".\RtmpPublisher.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StreamManager.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Í·ÎÄ¼þ"
@@ -218,6 +222,10 @@
 			</File>
 			<File
 				RelativePath=".\stdint.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StreamManager.h"
 				>
 			</File>
 			<File

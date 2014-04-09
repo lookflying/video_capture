@@ -100,6 +100,8 @@ public:
 		return m_channel_id;
 	}
 
+	void renewEncoder();
+
 private:
 	HANDLE m_channel_handle;
 	int m_channel_id;

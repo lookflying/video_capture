@@ -9,35 +9,36 @@
 using namespace std;
 #include "EncodedStream.h"
 #include "RtmpPublisher.h"
-map<int, RtmpPublisher*> publisher_map;
-
-int streamHandlerExt(ULONG channel_id, void* context){
-	static int count = 0;
-	assert(count == 0);
-	++count;
-	printf("%d handler now!", count);
-	DWORD len = 1024*1024;
-	unsigned char* buf = (unsigned char*)malloc(len);
-	int frame_type = 1;
-	int ret;
-	ret = ReadStreamData(EncodedStream::getStream(channel_id)->getHandle(), buf, &len, &frame_type);
-	if (ret == 0 || ret == 1){
-		printf("channel %d:\tframe_type = %d, len=%ld\n", channel_id, frame_type, (long)len); 
-
-	}
-	else{
-		printf("return error, error code = %X\n", ret);
-	}
-	free(buf);
-	--count;
-	return 0;
-
-}
+#include "StreamManager.h"
+//map<int, RtmpPublisher*> publisher_map;
+StreamManager stream_manager;
+//int streamHandlerExt(ULONG channel_id, void* context){
+//	static int count = 0;
+//	my_assert(count == 0);
+//	++count;
+//	printf("%d handler now!", count);
+//	DWORD len = 1024*1024;
+//	unsigned char* buf = (unsigned char*)malloc(len);
+//	int frame_type = 1;
+//	int ret;
+//	ret = ReadStreamData(EncodedStream::getStream(channel_id)->getHandle(), buf, &len, &frame_type);
+//	if (ret == 0 || ret == 1){
+//		printf("channel %d:\tframe_type = %d, len=%ld\n", channel_id, frame_type, (long)len); 
+//
+//	}
+//	else{
+//		printf("return error, error code = %X\n", ret);
+//	}
+//	free(buf);
+//	--count;
+//	return 0;
+//
+//}
 
 void oriStreamHandler(UINT channel_id, void* context){
 	static int count = 0;
 	static unsigned long tick = GetTickCount();
-	//assert(count == 0);
+	//my_assert(count == 0);
 	//++count;
 	//unsigned long t = GetTickCount();
 	//printf("%05d:\tt:%08lu\t", count, t - tick);
@@ -46,45 +47,69 @@ void oriStreamHandler(UINT channel_id, void* context){
 	//EncodedStream::getStream(channel_id)->writePipeYuv(EncodedStream::getStream(channel_id)->getYuvBuf(),
 	//	EncodedStream::getStream(channel_id)->getYuvBufSize());
 
-	printf("encoding...");
-	EncodedStream::getStream(channel_id)->getEncoder()->encode(EncodedStream::getStream(channel_id)->getYuvBuf());
-	printf("sending stream...");
-	map<int, RtmpPublisher*>::iterator publisher_it;
-	if ((publisher_it = publisher_map.find(channel_id)) != publisher_map.end()){
-		publisher_it->second->sendFrame(EncodedStream::getStream(channel_id)->getEncoder());
+	//printf("encoding...");
+	if (!stream_manager.channelIsBusy(channel_id)){
+		//EncodedStream::getStream(channel_id)->getEncoder()->encode(EncodedStream::getStream(channel_id)->getYuvBuf());
+		//printf("sending stream...");
+		//map<int, RtmpPublisher*>::iterator publisher_it;
+		//if ((publisher_it = publisher_map.find(channel_id)) != publisher_map.end()){
+		//	publisher_it->second->sendFrame(EncodedStream::getStream(channel_id)->getEncoder());
+		//}
+		stream_manager.wakeUp(channel_id, EncodedStream::getStream(channel_id)->getYuvBuf());
 	}
 
-	printf("\n");
+	//printf("\n");
 
-	fflush(stdout);
+	//fflush(stdout);
 
 	//--count;
 }
 
 int main(int argc, char** argv){
 	set<int> channel_id_set;
-	vector<EncodedStream*> streams;
-	vector<STARTUPINFO*> si_vector;
-	vector<PROCESS_INFORMATION*> pi_vector;
-	
+	int i;
+	string url;
+	int interval;
+	int file_interval;
+	//vector<EncodedStream*> streams;
+	//vector<STARTUPINFO*> si_vector;
+	//vector<PROCESS_INFORMATION*> pi_vector;
+
+
 	EncodedStream::setOriHandler(oriStreamHandler);
-	for (int i = 1; i < argc; ++i){
+	if (argc < 4){
+		printf("usage: %s url interval file_interval id0 ...\n", argv[0]);
+		return 0;
+	}
+	url = argv[1];
+	interval = atoi(argv[2]);
+	file_interval = atoi(argv[3]);
+
+	for (i = 4; i < argc; ++i){
 		channel_id_set.insert(atoi(argv[i]));
 	}
-	for (set<int>::iterator it = channel_id_set.begin(); it != channel_id_set.end(); ++it){
-		streams.push_back(new EncodedStream(*it));
-		char url[200];
-		sprintf(url, "rtmp://127.0.0.1/oflaDemo/test%d", *it);
-		publisher_map[*it] = new RtmpPublisher(url);
-		publisher_map[*it]->sendHeader(EncodedStream::getStream(*it)->getEncoder());
-		printf("open stream %d\n", *it);
+	stream_manager.start(url, interval, file_interval, channel_id_set);
+	//Thread<StreamManager> thread(&stream_manager, &StreamManager::checkTime);
+	//if (thread.start()){
+	//	printf("thread started\n");
+	//}
+	//thread.join();
+	
+	//for (set<int>::iterator it = channel_id_set.begin(); it != channel_id_set.end(); ++it){
+	//	streams.push_back(new EncodedStream(*it));
+	//	char url[200];
+	//	sprintf(url, "rtmp://127.0.0.1/oflaDemo/test%d", *it);
+	//	publisher_map[*it] = new RtmpPublisher(url);
+	//	//publisher_map[*it]->sendMetaData(EncodedStream::getStream(*it)->getEncoder());
+	//	publisher_map[*it]->sendHeader(EncodedStream::getStream(*it)->getEncoder());
+	//	printf("open stream %d\n", *it);
 
-	}
-	for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
-		//(*it)->writePipeYuv(NULL, 0);
-		(*it)->start();
-		
-	}
+	//}
+	//for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
+	//	//(*it)->writePipeYuv(NULL, 0);
+	//	(*it)->start();
+	//	
+	//}
 
 	//uncomment the following to use ffmpeg
 	//for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
@@ -121,25 +146,27 @@ int main(int argc, char** argv){
 
 	getchar();
 
-	for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
-		(*it)->stop();
-	}
+	stream_manager.stop();
 
-	for (vector<PROCESS_INFORMATION*>::iterator it = pi_vector.begin(); it != pi_vector.end(); ++it){
-		//WaitForSingleObject((*it)->hProcess, INFINITE);
-		UINT ret = 0;
-		TerminateProcess((*it)->hProcess, ret);
-		CloseHandle((*it)->hProcess);
-		delete (*it);
-	}
-	for (vector<STARTUPINFO*>::iterator it = si_vector.begin(); it != si_vector.end(); ++it){
-		delete (*it);
-	}
+	//for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
+	//	(*it)->stop();
+	//}
+
+	//for (vector<PROCESS_INFORMATION*>::iterator it = pi_vector.begin(); it != pi_vector.end(); ++it){
+	//	//WaitForSingleObject((*it)->hProcess, INFINITE);
+	//	UINT ret = 0;
+	//	TerminateProcess((*it)->hProcess, ret);
+	//	CloseHandle((*it)->hProcess);
+	//	delete (*it);
+	//}
+	//for (vector<STARTUPINFO*>::iterator it = si_vector.begin(); it != si_vector.end(); ++it){
+	//	delete (*it);
+	//}
 
 
-	for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
-		delete (*it);
-	}
+	//for (vector<EncodedStream*>::iterator it = streams.begin(); it != streams.end(); ++it){
+	//	delete (*it);
+	//}
 
 
 	return 0;

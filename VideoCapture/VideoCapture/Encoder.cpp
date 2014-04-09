@@ -12,15 +12,18 @@ Encoder::Encoder(int width, int height, int fps, int threads){
 	m_param.i_fps_num = fps;
 	m_param.i_fps_den = 1;
 	m_param.i_keyint_max = 25;
-	m_param.b_intra_refresh = 1;
+	//m_param.b_intra_refresh = 1;
 	m_param.b_annexb = 1;
-	x264_param_apply_profile(&m_param, "high");
-	m_param.rc.f_rf_constant = 4; 
-	m_param.rc.f_rf_constant_max = 8;
+	x264_param_apply_profile(&m_param, "main");
+	m_param.rc.b_mb_tree = 0;
+	m_param.rc.f_rf_constant = 25; 
+	m_param.rc.f_rf_constant_max = 45;
 	m_param.rc.i_rc_method = X264_RC_ABR;
-	m_param.rc.i_vbv_max_bitrate = 24000;
-	m_param.rc.i_bitrate = 15000;
+	//m_param.rc.i_vbv_max_bitrate = 2400;
+	//m_param.rc.i_vbv_buffer_size = 
+	m_param.rc.i_bitrate = 1000;
 	m_param.b_repeat_headers = 1;
+	m_param.b_cabac = 1;
 	m_encoder = x264_encoder_open(&m_param);
 }
 

@@ -22,7 +22,7 @@ EncodedStream::EncodedStream(int id){
 		m_channel_handle = ChannelOpen(m_channel_id);		
 		m_g_count++;
 		m_g_channel_map[m_channel_id] = this;
-		m_encoder = new Encoder(WIDTH, HEIGHT, FPS, 4);
+		m_encoder = new Encoder(WIDTH, HEIGHT, FPS, 2);
 		m_stream_writer = new StreamWriter(m_channel_id, time(0));
 	}
 }
@@ -43,6 +43,11 @@ EncodedStream::~EncodedStream(){
 		closeDSP();
 	}
 
+}
+
+void EncodedStream::renewEncoder(){
+	delete m_encoder;
+	m_encoder = new Encoder(WIDTH, HEIGHT, FPS, 2);
 }
 
 void EncodedStream::openDSP(){

@@ -10,6 +10,7 @@
 #endif
 
 #pragma comment(lib, "librtmp.lib")
+#include "MyAssert.h"
 
 int hex2bin(char *str, char **hex)
 {
@@ -101,14 +102,15 @@ RtmpPublisher::RtmpPublisher(RTMP * rtmp, const char* url){
 	m_rtmp = &m_rtmp_real;
 
 	err = RTMP_SetupURL(m_rtmp, m_url);
-	assert(err > 0);
+	my_assert(err > 0);
 	AVal record_opt = AVC("record");
 	AVal record_value = AVC("1");
+	//RTMP_SetOpt(m_rtmp, &record_opt, &record_value);
 	RTMP_EnableWrite(m_rtmp);
 	err = RTMP_Connect(m_rtmp, NULL);
-	assert(err > 0);
+	my_assert(err > 0);
 	err = RTMP_ConnectStream(m_rtmp, 0);
-	assert(err > 0);
+	my_assert(err > 0);
 
 	m_g_count++;
 }
@@ -125,7 +127,7 @@ RtmpPublisher::RtmpPublisher(const char* url){
 	RTMP_Init(m_rtmp);
 
 	err = RTMP_SetupURL(m_rtmp, m_url);
-	assert(err > 0);
+	my_assert(err > 0);
 	//AVal record_opt = AVC("record");
 	//AVal record_value = AVC("1");
 	//RTMP_SetOpt(m_rtmp, &record_opt, &record_value);
@@ -134,16 +136,52 @@ RtmpPublisher::RtmpPublisher(const char* url){
 	RTMP_SetOpt(m_rtmp, &append_opt, &append_value);
 	RTMP_EnableWrite(m_rtmp);
 	err = RTMP_Connect(m_rtmp, NULL);
-	assert(err > 0);
+	my_assert(err > 0);
 	err = RTMP_ConnectStream(m_rtmp, 0);
-	assert(err > 0);
+	my_assert(err > 0);
 	m_last_tick = GetTickCount();
 	m_last_timestamp = 0;
 	m_g_count++;
 }
 
+//for live
+RtmpPublisher::RtmpPublisher(const char* url, int p){
+	if (m_g_count == 0){
+		initSockets();
+	}
+	int err;
+	unsigned int len = strlen(url);
+	m_url = new char[len + 1];
+	memcpy(m_url, url, len);
+	m_url[len] = (char)0;
+	m_rtmp = RTMP_Alloc();
+	RTMP_Init(m_rtmp);
+
+	err = RTMP_SetupURL(m_rtmp, m_url);
+	
+	my_assert(err > 0);
+	//AVal record_opt = AVC("record");
+	//AVal record_value = AVC("1");
+	//RTMP_SetOpt(m_rtmp, &record_opt, &record_value);
+	//AVal append_opt = AVC("append");
+	//AVal append_value = AVC("1");
+	//RTMP_SetOpt(m_rtmp, &append_opt, &append_value);
+	RTMP_EnableWrite(m_rtmp);
+	err = RTMP_Connect(m_rtmp, NULL);
+	my_assert(err > 0);
+	err = RTMP_ConnectStream(m_rtmp, 0);
+	my_assert(err > 0);
+	m_last_tick = GetTickCount();
+	m_last_timestamp = 0;
+	m_g_count++;
+}
+
+
 RtmpPublisher::~RtmpPublisher(){
+	RTMP_DeleteStream(m_rtmp);
+	Sleep(1000);
 	RTMP_Close(m_rtmp);
+	Sleep(1000);
 	RTMP_Free(m_rtmp);
 	delete[] m_url;
 	m_g_count--;
@@ -157,7 +195,8 @@ void RtmpPublisher::initSockets(){
 	WORD version;
 	WSADATA wsaData;
 	version = MAKEWORD(2, 2);
-	assert(WSAStartup(version, &wsaData) == 0);
+	int err = WSAStartup(version, &wsaData);
+	my_assert(err == 0);
 #endif
 }
 
@@ -180,8 +219,8 @@ void RtmpPublisher::send(const unsigned char *buf, unsigned int len, int type, u
 	pakt.m_headerType = RTMP_PACKET_SIZE_LARGE;
 	pakt.m_nInfoField2 = m_rtmp->m_stream_id;
 	memcpy(pakt.m_body, buf, len);
-
-	assert(RTMP_IsConnected(m_rtmp));
+	int err = RTMP_IsConnected(m_rtmp);
+	my_assert(err);
 	RTMP_SendPacket(m_rtmp, &pakt, 0);
 	RTMPPacket_Free(&pakt);
 
@@ -222,7 +261,7 @@ void RtmpPublisher::send(const unsigned char *buf, unsigned int len, int type, u
 
 //static inline char* put_headers(char* ptr, Encoder* encoder){
 //	encoder->getHeaders();
-//	assert(encoder->getNNal() >= 2);
+//	my_assert(encoder->getNNal() >= 2);
 //	unsigned short sps_len, sps_len_net;
 //	*ptr = 0x01;//sps count
 //	ptr++;
@@ -303,8 +342,8 @@ void RtmpPublisher::send(const unsigned char *buf, unsigned int len, int type, u
 //	amf_ptr=put_byte( amf_ptr, AMF_OBJECT_END );
 //	amf_len = (unsigned int)(amf_ptr - packet.m_body);
 //	packet.m_nBodySize = amf_len;
-//	assert(RTMP_IsConnected(this->m_rtmp));
-//	assert(RTMP_SendPacket(this->m_rtmp, &packet, 0));
+//	my_assert(RTMP_IsConnected(this->m_rtmp));
+//	my_assert(RTMP_SendPacket(this->m_rtmp, &packet, 0));
 //	RTMPPacket_Free(&packet);
 //
 //
@@ -350,7 +389,7 @@ void RtmpPublisher::send(const unsigned char *buf, unsigned int len, int type, u
 //	packet.m_nBodySize = amf_len;
 //
 //
-//	assert(RTMP_IsConnected(this->m_rtmp));
+//	my_assert(RTMP_IsConnected(this->m_rtmp));
 //	RTMP_SendPacket(this->m_rtmp, &packet, 0);
 //
 //
@@ -358,7 +397,7 @@ void RtmpPublisher::send(const unsigned char *buf, unsigned int len, int type, u
 //}	
 
 static inline int nal_start_pos(unsigned char * buf){
-	assert(buf[0] == 0x00 && buf[1] == 0x00);
+	my_assert(buf[0] == 0x00 && buf[1] == 0x00);
 	if (buf[2] == 0x00 && buf[3] == 0x01){
 		return 4;
 	}else if (buf[2] == 0x01){
@@ -369,7 +408,7 @@ static inline int nal_start_pos(unsigned char * buf){
 			printf("%02X ", *(buf + j));
 		}
 		printf("\n");
-		assert(0);
+		my_assert(0);
 		return 0;
 	}
 }
@@ -387,7 +426,7 @@ void RtmpPublisher::sendHeader(Encoder * encoder){
 	*ptr++ = 0x00; // fill in 0; 
 	
 	encoder->getHeaders();
-	assert(encoder->getNNal() >= 2);
+	my_assert(encoder->getNNal() >= 2);
 	x264_nal_t *sps_nal, *pps_nal;
 	sps_nal = encoder->getNal();
 	pps_nal = encoder->getNal() + 1;
@@ -426,9 +465,10 @@ void RtmpPublisher::sendHeader(Encoder * encoder){
 	packet->m_nTimeStamp = getTimestamp();
 	packet->m_nInfoField2 = m_rtmp->m_stream_id;
 	packet->m_nBodySize = (unsigned int)(ptr - packet->m_body);
-
-	assert(RTMP_IsConnected(m_rtmp));
-	assert(RTMP_SendPacket(m_rtmp, packet, 0));
+	int err = RTMP_IsConnected(m_rtmp);
+	my_assert(err);
+	err = RTMP_SendPacket(m_rtmp, packet, 0);
+	my_assert(err);
 
 	RTMPPacket_Free(packet);
 	delete packet;
@@ -474,9 +514,10 @@ void RtmpPublisher::sendFrame(Encoder *encoder){
 		memcpy(ptr, cur->p_payload + start_pos[i], cur->i_payload - start_pos[i]);
 		ptr += (cur->i_payload - start_pos[i]);
 	}
-
-	assert(RTMP_IsConnected(m_rtmp));
-	assert(RTMP_SendPacket(m_rtmp, packet, 0));
+	int err = RTMP_IsConnected(m_rtmp);
+	my_assert(err);
+	err = RTMP_SendPacket(m_rtmp, packet, 0);
+	my_assert(err);
 	delete[] start_pos;
 	RTMPPacket_Free(packet);
 	delete packet;

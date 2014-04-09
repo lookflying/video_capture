@@ -4,7 +4,7 @@
 
 #define FILE_NAME_MAX_LEN	256
 #define PIPE_BUF	(1024*1024*3)
-
+#include "MyAssert.h"
 class StreamWriter{
 public:
 	StreamWriter(int channel_id, long timestamp){
@@ -69,18 +69,18 @@ public:
 				NULL); // Security
 			if (m_pipe_264 == INVALID_HANDLE_VALUE) 
 			{
-				assert(0); 
+				my_assert(0); 
 
 			}
 			if (!ConnectNamedPipe(m_pipe_264, NULL)){
-				assert(0);
+				my_assert(0);
 			}
 		}
 		DWORD written;
 		if (len > 0){
 			if (!WriteFile(m_pipe_264, buf, len, &written , NULL)){
-				assert(written == len);
-				assert(0);
+				my_assert(written == len);
+				my_assert(0);
 			}	
 		}
 
@@ -99,7 +99,7 @@ public:
 				NULL); // Security
 			if (m_pipe_yuv == INVALID_HANDLE_VALUE) 
 			{
-				assert(0); 
+				my_assert(0); 
 
 			}
 
@@ -108,7 +108,7 @@ public:
 
 			m_pipe_yuv_connected = ConnectNamedPipe(m_pipe_yuv, NULL)?true:(GetLastError() == ERROR_PIPE_CONNECTED);
 			if (!m_pipe_yuv_connected){
-				assert(0);
+				my_assert(0);
 			}
 			DWORD written;
 
